@@ -4,6 +4,12 @@ from local_store import save_file
 import os
 from embedding import embed
 from dotenv import load_dotenv
+from unstructured_utils import parse_docs, build_prompt
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.output_parsers import StrOutputParser
+from langchain_google_genai import ChatGoogleGenerativeAI
+from display import display_base64_image
 
 st.set_page_config(page_title="sando", page_icon=None, layout="centered", initial_sidebar_state="auto", menu_items=None)
 st.header("sando")
@@ -26,7 +32,30 @@ if files:
                     texts,tables,images=separator(chunks)
                     st.write(f"texts: {len(texts)}, tables: {len(tables)}, images: {len(images)}")
                     with st.spinner("generating embeddings"):
-                        embed(texts, tables, images)
+                        retriever=embed(texts, tables, images)
+                    chain_with_sources = {
+                        "context": retriever | RunnableLambda(parse_docs),
+                        "question": RunnablePassthrough(),
+                    } | RunnablePassthrough().assign(
+                        response=(
+                            RunnableLambda(build_prompt)
+                            | ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.8)
+                            | StrOutputParser()
+                        )
+                    )
+                    response = chain_with_sources.invoke(
+                        "What is a transformer?"
+                    )
+
+                    st.write("Response:", response['response'])
+
+                    st.write("\n\nContext:")
+                    for text in response['context']['texts']:
+                        st.write(text.text)
+                        st.write("Page number: ", text.metadata.page_number)
+                        st.write("\n" + "-"*50 + "\n")
+                    for image in response['context']['images']:
+                        display_base64_image(image)
                 except Exception as e:
                     st.write(e)
         pass

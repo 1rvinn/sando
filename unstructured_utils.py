@@ -1,100 +1,74 @@
-from unstructured.partition.pdf import partition_pdf
-
-output_path = "./content/"
-file_path = output_path + 'attention.pdf'
-
-# Reference: https://docs.unstructured.io/open-source/core-functionality/chunking
-chunks = partition_pdf(
-    filename=file_path,
-    infer_table_structure=True,            # extract tables
-    strategy="hi_res",                     # mandatory to infer tables
-
-    extract_image_block_types=["Image"],   # Add 'Table' to list to extract image of tables
-    # image_output_dir_path=output_path,   # if None, images and tables will saved in base64
-
-    extract_image_block_to_payload=True,   # if true, will extract base64 for API usage
-
-    chunking_strategy="by_title",          # or 'basic'
-    max_characters=10000,                  # defaults to 500
-    combine_text_under_n_chars=2000,       # defaults to 0
-    new_after_n_chars=6000,
-
-    # extract_images_in_pdf=True,          # deprecated
-)
-
-# separate tables from texts
-tables = []
-texts = []
-
-for chunk in chunks:
-    if "Table" in str(type(chunk)):
-        tables.append(chunk)
-
-    if "CompositeElement" in str(type((chunk))):
-        texts.append(chunk)
-
-def get_images_base64(chunks):
-    images_b64 = []
-    for chunk in chunks:
-        if "CompositeElement" in str(type(chunk)):
-            chunk_els = chunk.metadata.orig_elements
-            for el in chunk_els:
-                if "Image" in str(type(el)):
-                    images_b64.append(el.metadata.image_base64)
-    return images_b64
-
-images = get_images_base64(chunks)
-
-from langchain_groq import ChatGroq
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+from base64 import b64decode
 
-# Prompt
-prompt_text = """
-You are an assistant tasked with summarizing tables and text.
-Give a concise summary of the table or text.
 
-Respond only with the summary, no additionnal comment.
-Do not start your message by saying "Here is a summary" or anything like that.
-Just give the summary as it is.
+def parse_docs(docs):
+    """Split base64-encoded images and texts"""
+    b64 = []
+    text = []
+    for doc in docs:
+        try:
+            b64decode(doc)
+            b64.append(doc)
+        except Exception as e:
+            text.append(doc)
+    return {"images": b64, "texts": text}
 
-Table or text chunk: {element}
 
-"""
-prompt = ChatPromptTemplate.from_template(prompt_text)
+def build_prompt(kwargs):
 
-# Summary chain
-model = ChatGroq(temperature=0.5, model="llama-3.1-8b-instant")
-summarize_chain = {"element": lambda x: x} | prompt | model | StrOutputParser()
+    docs_by_type = kwargs["context"]
+    user_question = kwargs["question"]
 
-# Summarize text
-text_summaries = summarize_chain.batch(texts, {"max_concurrency": 3})
+    context_text = ""
+    if len(docs_by_type["texts"]) > 0:
+        for text_element in docs_by_type["texts"]:
+            context_text += text_element.text
 
-# Summarize tables
-tables_html = [table.metadata.text_as_html for table in tables]
-table_summaries = summarize_chain.batch(tables_html, {"max_concurrency": 3})
+    # construct prompt with context (including images)
+    prompt_template = f"""
+    Answer the question based only on the following context, which can include text, tables, and the below image.
+    Context: {context_text}
+    Question: {user_question}
+    """
 
-from langchain_openai import ChatOpenAI
+    prompt_content = [{"type": "text", "text": prompt_template}]
 
-prompt_template = """Describe the image in detail. For context,
-                  the image is part of a research paper explaining the transformers
-                  architecture. Be specific about graphs, such as bar plots."""
-messages = [
-    (
-        "user",
+    if len(docs_by_type["images"]) > 0:
+        for image in docs_by_type["images"]:
+            prompt_content.append(
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{image}"},
+                }
+            )
+
+    return ChatPromptTemplate.from_messages(
         [
-            {"type": "text", "text": prompt_template},
-            {
-                "type": "image_url",
-                "image_url": {"url": "data:image/jpeg;base64,{image}"},
-            },
-        ],
+            HumanMessage(content=prompt_content),
+        ]
     )
-]
-
-prompt = ChatPromptTemplate.from_messages(messages)
-
-chain = prompt | ChatOpenAI(model="gpt-4o-mini") | StrOutputParser()
 
 
-image_summaries = chain.batch(images)
+# chain = (
+#     {
+#         "context": retriever | RunnableLambda(parse_docs),
+#         "question": RunnablePassthrough(),
+#     }
+#     | RunnableLambda(build_prompt)
+#     | ChatOpenAI(model="gpt-4o-mini")
+#     | StrOutputParser()
+# )
+
+# chain_with_sources = {
+#     "context": retriever | RunnableLambda(parse_docs),
+#     "question": RunnablePassthrough(),
+# } | RunnablePassthrough().assign(
+#     response=(
+#         RunnableLambda(build_prompt)
+#         | ChatOpenAI(model="gpt-4o-mini")
+#         | StrOutputParser()
+#     )
+# )
