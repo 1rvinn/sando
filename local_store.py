@@ -10,4 +10,4 @@ def save_file(file):
             f.write(file.getbuffer())
         return(file_path)
     except Exception as e:
-        st.error(e)
+        st.error(f"error: {e}")

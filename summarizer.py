@@ -7,9 +7,17 @@ from PIL import Image
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
+import streamlit as st
+import time
 
 load_dotenv()
 GOOGLE_API_KEY=os.getenv("API_KEY")
+
+def summarize_text(texts):
+    summaries=[]
+    for text in texts:
+        summaries.append(text.text)
+    return summaries
 
 def summarize_tables(tables):
     prompt_text = """
@@ -41,8 +49,14 @@ def summarize_images(images):
                 These summaries will be embedded and used to retrieve the raw image. \
                 Describe the image in detail. Be specific about graphs, such as bar plots."""
     for image in images:
-        image_data=base64.b64decode(image)
+        time.sleep(3)
+        # Extract base64 string from image object
+        image_base64 = image['text'] if isinstance(image, dict) and 'text' in image else image
+        image_data=base64.b64decode(image_base64)
         img=Image.open(BytesIO(image_data))
-        response=model.generate_content([prompt, img])
+        try:
+            response=model.generate_content([prompt, img])
+        except Exception as e:
+            st.error(e)
         summaries.append(response.text)
     return summaries

@@ -6,3 +6,5 @@ langchain-google-genai
 google-generativeai
 chromadb
 python-dotenv
+langchain-chroma
+faiss-cpu
