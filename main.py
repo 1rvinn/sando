@@ -37,7 +37,7 @@ st.set_page_config(page_title="sando", page_icon=None, layout="wide", initial_si
 st.logo("logo.png",size="large")
 
 load_dotenv()
-GOOGLE_API_KEY=os.getenv("GOOGLE_API_KEY")
+GOOGLE_API_KEY=st.secrets["GEMINI_API_KEY"]
 
 #file uploader
 files=st.sidebar.file_uploader(label="upload your documents", type=["csv","pdf","jpg","jpeg","png","txt"], accept_multiple_files=True, help=None, disabled=False, label_visibility="visible")
