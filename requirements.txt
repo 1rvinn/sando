@@ -8,3 +8,4 @@ chromadb
 python-dotenv
 langchain-chroma
 faiss-cpu
+opencv-python-headless
