@@ -38,6 +38,7 @@ st.logo("logo.png",size="large")
 
 load_dotenv()
 GOOGLE_API_KEY=st.secrets["GEMINI_API_KEY"]
+os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
 #file uploader
 files=st.sidebar.file_uploader(label="upload your documents", type=["csv","pdf","jpg","jpeg","png","txt"], accept_multiple_files=True, help=None, disabled=False, label_visibility="visible")
@@ -129,7 +130,7 @@ if files:
 
             # Initialize FAISS and add data
             with st.spinner("initializing vector store"):
-                embedding_function = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+                embedding_function = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004, google_api_key=GOOGLE_API_KEY")
                 vectorstore = FAISS.from_texts(
                     ["initial document"],  # Create with a dummy document
                     embedding_function
@@ -198,7 +199,7 @@ if st.session_state.retriever:
     } | RunnablePassthrough().assign(
         response=(
             RunnableLambda(build_prompt)
-            | ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.8)
+            | ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.8, google_api_key=GOOGLE_API_KEY)
             | StrOutputParser()
         )
     )
