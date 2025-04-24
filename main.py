@@ -130,7 +130,7 @@ if files:
 
             # Initialize FAISS and add data
             with st.spinner("initializing vector store"):
-                embedding_function = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004, google_api_key=GOOGLE_API_KEY")
+                embedding_function = GoogleGenerativeAIEmbeddings(model="embedding-001, google_api_key=GOOGLE_API_KEY")
                 vectorstore = FAISS.from_texts(
                     ["initial document"],  # Create with a dummy document
                     embedding_function
