@@ -33,7 +33,7 @@ if os.path.exists(vectorstore_dir):
     shutil.rmtree(vectorstore_dir)
 os.makedirs(vectorstore_dir, exist_ok=True)
 
-st.set_page_config(page_title="sando", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
+st.set_page_config(page_title="sando", page_icon="icon.png", layout="wide", initial_sidebar_state="auto", menu_items=None)
 st.logo("logo.png",size="large")
 
 load_dotenv()
