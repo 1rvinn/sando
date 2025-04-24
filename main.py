@@ -130,7 +130,7 @@ if files:
 
             # Initialize FAISS and add data
             with st.spinner("initializing vector store"):
-                embedding_function = GoogleGenerativeAIEmbeddings(model="embedding-001, google_api_key=GOOGLE_API_KEY")
+                embedding_function = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
                 vectorstore = FAISS.from_texts(
                     ["initial document"],  # Create with a dummy document
                     embedding_function
@@ -199,7 +199,7 @@ if st.session_state.retriever:
     } | RunnablePassthrough().assign(
         response=(
             RunnableLambda(build_prompt)
-            | ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.8, google_api_key=GOOGLE_API_KEY)
+            | ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.8)
             | StrOutputParser()
         )
     )
