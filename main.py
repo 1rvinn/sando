@@ -164,7 +164,7 @@ if files:
 
 # Display extracted contents if available
 if st.session_state.processed_data:
-    with st.expander("extracted contents final"):
+    with st.expander("extracted contents"):
         for i, data in enumerate(st.session_state.processed_data):
             # Get the file name from the first available source
             file_name = None
