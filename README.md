@@ -32,25 +32,7 @@ A powerful document analysis and Q&A application built with Streamlit and Google
 
 ## Technical Pipeline
 
-1. **Document Processing**:
-   - Files are uploaded through Streamlit's interface
-   - Content is extracted using the Unstructured library
-   - Documents are partitioned into chunks (text, tables, images)
-
-2. **Content Embedding**:
-   - Text and table content is embedded using Google's text-embedding-004 model
-   - Images are processed and embedded separately
-   - Embeddings are stored in a FAISS vector store
-
-3. **Query Processing**:
-   - User queries are processed through a multi-vector retrieval system
-   - Relevant content is retrieved based on semantic similarity
-   - Context is built combining text, tables, and images
-
-4. **Response Generation**:
-   - Responses are generated using Google's Gemini 2.0 model
-   - Sources are tracked and can be displayed for verification
-   - Both text and image content are considered in responses
+![pipeline](https://github.com/1rvinn/sando/blob/main/pipeline.jpg?raw=true)
 
 ## Installation Guide
 
