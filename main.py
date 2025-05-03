@@ -4,7 +4,7 @@ from local_store import save_file
 import os
 from embedding import embed
 from dotenv import load_dotenv
-from unstructured_utils import parse_docs, build_prompt
+from prompt import parse_docs, build_prompt
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.output_parsers import StrOutputParser
@@ -183,7 +183,7 @@ if st.session_state.processed_data:
             for text in data[0]:
                 st.markdown(text.text)
             for table in data[1]:
-                st.markdown(table.metadata.text_as_html)
+                st.html(table.metadata.text_as_html)
             st.markdown("## images:")
             for image in data[2]:
                 if isinstance(image, dict):
