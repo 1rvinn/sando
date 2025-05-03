@@ -41,7 +41,7 @@ GOOGLE_API_KEY=st.secrets["GEMINI_API_KEY"]
 os.environ["GOOGLE_API_KEY"] = GOOGLE_API_KEY
 
 #file uploader
-files=st.sidebar.file_uploader(label="upload your documents", type=["csv","pdf","jpg","jpeg","png","txt"], accept_multiple_files=True, help=None, disabled=False, label_visibility="visible")
+files=st.sidebar.file_uploader(label="upload your documents", type=["csv","pdf","jpg","jpeg","png","txt", "docx", "doc", "ppt","pptx", "xlsx"], accept_multiple_files=True, help=None, disabled=False, label_visibility="visible")
 
 if files:
     if st.sidebar.button("ask ai", type="primary"):
